@@ -64,7 +64,7 @@ func GenStruct2MapFile() {
 	filename := os.Args[1]
 
 	// 设置要查找的特定 go:generate 标识
-	const tag = "//go:generate conv2map"
+	const tag = "//go:generate convToMa"
 
 	// 1. 解析文件
 	fset := token.NewFileSet()
