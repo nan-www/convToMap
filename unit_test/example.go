@@ -1,6 +1,6 @@
 package unit_test
 
-//go:generate convToMap
+//go:generate convToMap example.go
 type Example struct {
 	ID     int               `json:"id,omitempty"`
 	Name   string            `json:"name,omitempty"`
