@@ -158,6 +158,7 @@ func GenStruct2MapFile() {
 
 	// 4. 生成代码
 	if len(data.Structs) == 0 {
+		fmt.Fprintf(os.Stderr, "No struct found with %s", tag)
 		return // 没有找到需要生成的结构体
 	}
 
