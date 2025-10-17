@@ -11,16 +11,19 @@ import (
 	"os"
 	"strings"
 	"text/template"
+
+	"github.com/nan-www/convToMap/ds"
 )
 
 type TemplateData struct {
 	PackageName string
-	Structs     []Struct
+	Structs     []*Struct
 }
 
 type Struct struct {
-	Name   string
-	Fields []Field
+	Name      string
+	Fields    []Field
+	ASTStruct *ast.StructType
 }
 
 type Field struct {
@@ -59,8 +62,9 @@ func GenStruct2MapFile(filename string) {
 
 	data := TemplateData{
 		PackageName: node.Name.Name,
-		Structs:     []Struct{},
+		Structs:     []*Struct{},
 	}
+	name2Node := make(map[string]*ds.Node[Struct])
 
 	ast.Inspect(node, func(n ast.Node) bool {
 		genDecl, ok := n.(*ast.GenDecl)
@@ -89,52 +93,72 @@ func GenStruct2MapFile(filename string) {
 				continue
 			}
 			currentStruct := Struct{
-				Name:   typeSpec.Name.Name,
-				Fields: []Field{},
+				Name:      typeSpec.Name.Name,
+				Fields:    []Field{},
+				ASTStruct: structType,
+			}
+			currentNode := &ds.Node[Struct]{
+				Val:        &currentStruct,
+				Children:   make([]*ds.Node[Struct], 0),
+				ParentsNum: 0,
 			}
 
+			if cs, ok := name2Node[currentStruct.Name]; ok {
+				cs.Val = &currentStruct
+			} else {
+				name2Node[currentStruct.Name] = currentNode
+			}
 			for _, field := range structType.Fields.List {
-				// inline 字段处理
+				// 如果有 inline 则构建依赖关系
 				if len(field.Names) == 0 {
-
-				}
-
-				fieldName := field.Names[0].Name
-				tagName := fieldName // 默认使用字段名
-
-				// 尝试解析 tag
-				if field.Tag != nil {
-					// field.Tag.Value 是带有反引号的字符串，需要解析
-					// 例如：`json:"id,omitempty"`
-					tagString := strings.Trim(field.Tag.Value, "`")
-
-					// 使用 reflect.StructTag 模拟解析
-					// 为了简单起见，我们直接查找 json tag
-					if tag, found := reflectTag(tagString, "json"); found {
-						// 忽略 ,omitempty 或其他选项
-						tagName = strings.Split(tag, ",")[0]
-						// 忽略 tag 中 "-" 的字段
-						if tagName == "-" {
-							continue
+					//se, ok := field.Type.(*ast.SelectorExpr)
+					// 先支持 inline 结构体在当前文件的情况
+					if ident, ok := field.Type.(*ast.Ident); ok {
+						parentStructName := ident.Name
+						ps := name2Node[parentStructName]
+						if ps == nil {
+							name2Node[parentStructName] = &ds.Node[Struct]{
+								Children:   make([]*ds.Node[Struct], 0),
+								ParentsNum: 0,
+							}
+							ps = name2Node[parentStructName]
 						}
+						ps.Children = append(ps.Children, currentNode)
+						currentNode.ParentsNum += 1
 					}
 				}
-
-				currentStruct.Fields = append(currentStruct.Fields, Field{
-					Name:    fieldName,
-					TagName: tagName,
-				})
 			}
-
-			data.Structs = append(data.Structs, currentStruct)
+			data.Structs = append(data.Structs, &currentStruct)
 		}
-
 		return false
 	})
 
 	if len(data.Structs) == 0 {
 		fmt.Fprintf(os.Stderr, "No struct found with %s", tag)
 		return
+	}
+
+	var processNodeFn func(node *ds.Node[Struct])
+	processNodeFn = func(node *ds.Node[Struct]) {
+		if node.ParentsNum < 0 {
+			return
+		}
+		processStructField(node, name2Node)
+		node.ParentsNum -= 1
+		for _, child := range node.Children {
+			child.ParentsNum -= 1
+			if child.ParentsNum == 0 {
+				// 递归
+				processNodeFn(child)
+			}
+		}
+	}
+	for _, s := range data.Structs {
+		node := name2Node[s.Name]
+		if node.ParentsNum != 0 {
+			continue
+		}
+		processNodeFn(node)
 	}
 
 	var buf bytes.Buffer
@@ -174,4 +198,47 @@ func reflectTag(tagString, key string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+func processStructField(currentNode *ds.Node[Struct], name2Node map[string]*ds.Node[Struct]) {
+	currentStruct := currentNode.Val
+	for _, field := range currentStruct.ASTStruct.Fields.List {
+		// 如果有 inline 则构建依赖关系
+		if len(field.Names) == 0 {
+			if ident, ok := field.Type.(*ast.Ident); ok {
+				pn := name2Node[ident.Name]
+				if pn == nil {
+					panic("Can't not find relevant struct node for inline struct: " + ident.Name)
+				}
+				currentStruct.Fields = append(currentStruct.Fields, pn.Val.Fields...)
+			}
+			continue
+		}
+
+		fieldName := field.Names[0].Name
+		tagName := fieldName // 默认使用字段名
+
+		// 尝试解析 tag
+		if field.Tag != nil {
+			// field.Tag.Value 是带有反引号的字符串，需要解析
+			// 例如：`json:"id,omitempty"`
+			tagString := strings.Trim(field.Tag.Value, "`")
+
+			// 使用 reflect.StructTag 模拟解析
+			// 为了简单起见，我们直接查找 json tag
+			if tag, found := reflectTag(tagString, "json"); found {
+				// 忽略 ,omitempty 或其他选项
+				tagName = strings.Split(tag, ",")[0]
+				// 忽略 tag 中 "-" 的字段
+				if tagName == "-" {
+					continue
+				}
+			}
+		}
+
+		currentStruct.Fields = append(currentStruct.Fields, Field{
+			Name:    fieldName,
+			TagName: tagName,
+		})
+	}
 }

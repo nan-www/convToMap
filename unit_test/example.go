@@ -9,9 +9,11 @@ type Example struct {
 	Float        float64           `json:"float64,omitempty"`
 	Ignore       map[string]string `json:"-"`
 	InlineStruct `json:",inline"`
-	aa.Hamabe    `json:",inline"`
+	// 目前不支持不在同文件内的 inline 结构体
+	aa.Hamabe `json:",inline"`
 }
 
+//go:generate convToMap example.go
 type InlineStruct struct {
 	A string
 	B int
