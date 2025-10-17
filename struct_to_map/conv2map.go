@@ -37,7 +37,7 @@ package {{.PackageName}}
 
 {{range .Structs}}
 // ToMap converts the {{.Name}} struct to a map[string]any.
-func (s *{{.Name}}) ToMap() map[string]any {
+func (s *{{.Name}}) _2Map() map[string]any {
 	m := make(map[string]any)
 	
 	{{range .Fields}}
