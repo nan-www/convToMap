@@ -161,6 +161,8 @@ func processStructField(currentNode *ds.Node[Struct], name2Node map[string]*ds.N
 				if ident.Obj != nil {
 					isPtrObj = true
 					typeStr = ident.Obj.Name
+				} else {
+					typeStr = "*" + ident.Name
 				}
 			}
 		}

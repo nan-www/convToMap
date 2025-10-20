@@ -12,6 +12,7 @@ type Example struct {
 	Name         string            `json:"name,omitempty"`
 	Float        float64           `json:"float64,omitempty"`
 	Ignore       map[string]string `json:"-"`
+	PtrInt       *int64            `json:"ptrInt,omitempty"`
 	InlineStruct `json:",inline"`
 }
 
