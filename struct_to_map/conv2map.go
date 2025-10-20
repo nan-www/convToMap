@@ -157,7 +157,7 @@ func GenStruct2MapFile(filename string) {
 		for _, child := range node.Children {
 			child.ParentsNum -= 1
 			if child.ParentsNum == 0 {
-				// 递归
+				// DFS多叉树
 				processNodeFn(child)
 			}
 		}
@@ -217,7 +217,8 @@ func processStructField(currentNode *ds.Node[Struct], name2Node map[string]*ds.N
 			if ident, ok := field.Type.(*ast.Ident); ok {
 				pn := name2Node[ident.Name]
 				if pn == nil {
-					panic("Can't not find relevant struct node for inline struct: " + ident.Name)
+					fmt.Fprintf(os.Stderr, "Warning: Can't not find relevant struct node for inline struct: %s\n", ident.Name)
+					panic("")
 				}
 				currentStruct.Fields = append(currentStruct.Fields, pn.Val.Fields...)
 			}
