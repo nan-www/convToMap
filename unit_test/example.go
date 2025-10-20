@@ -11,6 +11,7 @@ type Example struct {
 	ID           int               `json:"id,omitempty"`
 	Name         string            `json:"name,omitempty"`
 	Float        float64           `json:"float64,omitempty"`
+	PtrInt       *int64            `json:"ptrInt,omitempty"`
 	Ignore       map[string]string `json:"-"`
 	InlineStruct `json:",inline"`
 }
