@@ -36,6 +36,25 @@ func (s *{{.Name}}) _2Map() map[string]any {
 
     return m
 }
+func (s *{{.Name}}) _2Struct(str2Any map[string]any)  {
+    {{range .Fields}}
+    {{if .IsPtrObj}}
+    if val, ok := str2Any["{{.TagName}}"]; ok {
+		s.{{.Name}} = &{{.Type}}{}
+        s.{{.Name}}._2Struct(val.(map[string]any))
+    }
+    {{else if .IsObj}}
+    if val, ok := str2Any["{{.TagName}}"]; ok {
+		s.{{.Name}} = {{.Type}}{}
+        s.{{.Name}}._2Struct(val.(map[string]any))
+    }
+    {{else}}
+    if val, ok := str2Any["{{.TagName}}"]; ok {
+        s.{{.Name}} = val.({{.Type}})
+    }
+    {{end}}
+    {{end}}
+}
 {{end}}
 `
 

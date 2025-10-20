@@ -27,6 +27,7 @@ type Field struct {
 	TagName  string // 用于 map 的键名，通常是 JSON tag
 	IsObj    bool
 	IsPtrObj bool
+	Type     string
 }
 
 func ParseMarkStruct(node *ast.File) *TemplateData {
@@ -144,10 +145,14 @@ func processStructField(currentNode *ds.Node[Struct], name2Node map[string]*ds.N
 		}
 		var isObj bool
 		var isPtrObj bool
+		var typeStr string
 		if ident, ok := field.Type.(*ast.Ident); ok {
 			// 特殊处理结构体字段
 			if ident.Obj != nil {
 				isObj = true
+				typeStr = ident.Obj.Name
+			} else {
+				typeStr = ident.Name
 			}
 		}
 
@@ -155,10 +160,10 @@ func processStructField(currentNode *ds.Node[Struct], name2Node map[string]*ds.N
 			if ident, ok := se.X.(*ast.Ident); ok {
 				if ident.Obj != nil {
 					isPtrObj = true
+					typeStr = ident.Obj.Name
 				}
 			}
 		}
-
 		fieldName := field.Names[0].Name
 		tagName := fieldName // 默认使用字段名
 
@@ -182,6 +187,7 @@ func processStructField(currentNode *ds.Node[Struct], name2Node map[string]*ds.N
 		elems := Field{
 			Name:    fieldName,
 			TagName: tagName,
+			Type:    typeStr,
 		}
 		if isPtrObj {
 			elems.IsPtrObj = true
