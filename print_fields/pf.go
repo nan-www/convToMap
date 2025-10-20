@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"os"
 
+	"github.com/bytedance/sonic"
 	"github.com/nan-www/convToMap/ps"
 )
 
@@ -20,10 +21,15 @@ func PrintAllFields(filename, structName string) {
 	if len(data.Structs) == 0 {
 		return
 	}
-	//for _, s := range data.Structs {
-	//	if s.Name != structName {
-	//		continue
-	//	}
-	//	s.Fields
-	//}
+	ret := make([]string, 0)
+	for _, s := range data.Structs {
+		if s.Name != structName {
+			continue
+		}
+		for _, field := range s.Fields {
+			ret = append(ret, field.TagName)
+		}
+	}
+	marshalString, _ := sonic.MarshalString(ret)
+	fmt.Println(marshalString)
 }
