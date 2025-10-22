@@ -25,10 +25,14 @@ func (s *{{.Name}}) ToStringMap() map[string]any {
     {{range .Fields}}
     {{if .IsPtrObj}}
     if s.{{.Name}} != nil {
-        m["{{.TagName}}"] = s.{{.Name}}._2Map()
+        m["{{.TagName}}"] = s.{{.Name}}.ToStringMap()
     }
     {{else if .IsObj}}
-    m["{{.TagName}}"] = s.{{.Name}}._2Map()
+    m["{{.TagName}}"] = s.{{.Name}}.ToStringMap()
+	{{else if .IsPtr}}
+    if s.{{.Name}} != nil {
+        m["{{.TagName}}"] = s.{{.Name}}
+    }
     {{else}}
     m["{{.TagName}}"] = s.{{.Name}}
     {{end}}

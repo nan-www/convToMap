@@ -27,6 +27,7 @@ type Field struct {
 	TagName  string // 用于 map 的键名，通常是 JSON tag
 	IsObj    bool
 	IsPtrObj bool
+	IsPtr    bool
 	Type     string
 }
 
@@ -146,6 +147,7 @@ func processStructField(currentNode *ds.Node[Struct], name2Node map[string]*ds.N
 		var isObj bool
 		var isPtrObj bool
 		var typeStr string
+		var isPtr bool
 		if ident, ok := field.Type.(*ast.Ident); ok {
 			// 特殊处理结构体字段
 			if ident.Obj != nil {
@@ -163,6 +165,7 @@ func processStructField(currentNode *ds.Node[Struct], name2Node map[string]*ds.N
 					typeStr = ident.Obj.Name
 				} else {
 					typeStr = "*" + ident.Name
+					isPtr = true
 				}
 			}
 		}
@@ -195,6 +198,9 @@ func processStructField(currentNode *ds.Node[Struct], name2Node map[string]*ds.N
 			elems.IsPtrObj = true
 		} else if isObj {
 			elems.IsObj = true
+		}
+		if isPtr {
+			elems.IsPtr = true
 		}
 		currentStruct.Fields = append(currentStruct.Fields, elems)
 	}
