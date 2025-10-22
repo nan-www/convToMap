@@ -21,24 +21,34 @@ package {{.PackageName}}
 {{range .Structs}}
 // ToStringMap converts the {{.Name}} struct to a map[string]any.
 func (s *{{.Name}}) ToStringMap() map[string]any {
-	m := make(map[string]any)
-    {{range .Fields}}
-    {{if .IsPtrObj}}
-    if s.{{.Name}} != nil {
-        m["{{.TagName}}"] = s.{{.Name}}.ToStringMap()
-    }
-    {{else if .IsObj}}
-    m["{{.TagName}}"] = s.{{.Name}}.ToStringMap()
-	{{else if .IsPtr}}
-    if s.{{.Name}} != nil {
-        m["{{.TagName}}"] = s.{{.Name}}
-    }
-    {{else}}
-    m["{{.TagName}}"] = s.{{.Name}}
-    {{end}}
-    {{end}}
+    m := make(map[string]any)
+    {{range .Fields}} // <-- 字段循环开始
+		{{if .IsPtrObj}}
+		if s.{{.Name}} != nil {
+			m["{{.TagName}}"] = s.{{.Name}}.ToStringMap()
+		}
+		{{else if .IsObj}}
+		m["{{.TagName}}"] = s.{{.Name}}.ToStringMap()
+		{{else if .IsPtr}}
+		if s.{{.Name}} != nil {
+			m["{{.TagName}}"] = s.{{.Name}}
+		}
+		{{else}}
+			{{if eq .Type "string"}}
+			if s.{{.Name}} != "" {
+				m["{{.TagName}}"] = s.{{.Name}}
+			}
+			{{else if or (eq .Type "int") (eq .Type "int32") (eq .Type "int64") (eq .Type "float64") (eq .Type "float32")}}
+			if s.{{.Name}} != 0 {
+				m["{{.TagName}}"] = s.{{.Name}}
+			}
+			{{else}}
+			m["{{.TagName}}"] = s.{{.Name}}
+			{{end}}
+		{{end}}
+    {{end}} // <-- 错误修复 1：在这里关闭 'range .Fields' 循环
 
-    return m
+    return m // <-- 错误修复 2：'return' 语句必须在循环之外
 }
 {{end}}
 `
