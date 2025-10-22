@@ -22,7 +22,7 @@ package {{.PackageName}}
 // ToStringMap converts the {{.Name}} struct to a map[string]any.
 func (s *{{.Name}}) ToStringMap() map[string]any {
     m := make(map[string]any)
-    {{range .Fields}} // <-- 字段循环开始
+    {{range .Fields}} 
 		{{if .IsPtrObj}}
 		if s.{{.Name}} != nil {
 			m["{{.TagName}}"] = s.{{.Name}}.ToStringMap()
@@ -46,9 +46,9 @@ func (s *{{.Name}}) ToStringMap() map[string]any {
 			m["{{.TagName}}"] = s.{{.Name}}
 			{{end}}
 		{{end}}
-    {{end}} // <-- 错误修复 1：在这里关闭 'range .Fields' 循环
+    {{end}} 
 
-    return m // <-- 错误修复 2：'return' 语句必须在循环之外
+    return m 
 }
 {{end}}
 `
