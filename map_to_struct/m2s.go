@@ -46,8 +46,8 @@ func (src *{{.Name}}) Map2Struct(mm map[string]any){
 			src.{{.Name}} = mm["{{.TagName}}"].({{.Type}})
 		}
 		{{else}}
-		if mm["{{.TagName}}"] != nil {
-			src.{{.Name}} = mm["{{.TagName}}"].({{.Type}})
+		if val, ok := mm["{{.TagName}}"]; ok {
+			src.{{.Name}} = val.({{.Type}})
 		}
 		{{end}}
     {{end}}
