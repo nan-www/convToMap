@@ -5,8 +5,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/nan-www/convToMap/generator"
+	"github.com/nan-www/convToMap/map_to_struct"
 	"github.com/nan-www/convToMap/struct_to_map"
 )
+
+const tag = "//go:generate convToMap"
 
 func main() {
 	fmt.Println("Begin generating!")
@@ -16,5 +20,5 @@ func main() {
 	}
 	filename := os.Args[1]
 	fmt.Printf("Args: %s", filename)
-	struct_to_map.GenStruct2MapFile(filename)
+	generator.Gen(filename, tag, struct_to_map.GenTemplate, map_to_struct.GenTemplate)
 }
