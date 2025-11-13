@@ -1,6 +1,10 @@
 package unit_test
 
-import "github.com/nan-www/convToMap/unit_test/aa"
+import (
+	"sync"
+
+	"github.com/nan-www/convToMap/unit_test/aa"
+)
 
 //go:generate convToMap example.go
 type Example struct {
@@ -14,6 +18,7 @@ type Example struct {
 	Ignore       map[string]string `json:"-"`
 	PtrInt       *int64            `json:"ptrInt,omitempty"`
 	InlineStruct `json:",inline"`
+	Mu           sync.Mutex
 }
 
 //go:generate convToMap example.go

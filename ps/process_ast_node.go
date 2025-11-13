@@ -180,11 +180,13 @@ func processStructField(currentNode *ds.Node[Struct], name2Node map[string]*ds.N
 			if tag, found := reflectTag(tagString, "json"); found {
 				// 忽略 ,omitempty 或其他选项
 				tagName = strings.Split(tag, ",")[0]
-				// 忽略 tag 中 "-" 的字段
-				if tagName == "-" {
+				// Ignore field which has no json tag or is "-"
+				if tagName == "-" || tagName == "" {
 					continue
 				}
 			}
+		} else {
+			continue
 		}
 
 		elems := Field{
