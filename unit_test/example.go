@@ -18,6 +18,8 @@ type Example struct {
 	Ignore       map[string]string `json:"-"`
 	PtrInt       *int64            `json:"ptrInt,omitempty"`
 	InlineStruct `json:",inline"`
+	Str2Foo      map[string]Foo `json:"str2Foo,omitempty"`
+	Foos         []Foo          `json:"foos,omitempty"`
 	Mu           sync.Mutex
 }
 

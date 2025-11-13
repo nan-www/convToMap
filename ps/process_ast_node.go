@@ -26,7 +26,11 @@ type Field struct {
 	IsObj    bool
 	IsPtrObj bool
 	IsPtr    bool
+	IsMap    bool
+	IsArray  bool
 	Type     string
+	MapKey   *Field
+	MapValue *Field
 }
 
 func ParseMarkStruct(node *ast.File, command string) *TemplateData {
@@ -142,31 +146,8 @@ func processStructField(currentNode *ds.Node[Struct], name2Node map[string]*ds.N
 			}
 			continue
 		}
-		var isObj bool
-		var isPtrObj bool
-		var typeStr string
-		var isPtr bool
-		if ident, ok := field.Type.(*ast.Ident); ok {
-			// 特殊处理结构体字段
-			if ident.Obj != nil {
-				isObj = true
-				typeStr = ident.Obj.Name
-			} else {
-				typeStr = ident.Name
-			}
-		}
-
-		if se, ok := field.Type.(*ast.StarExpr); ok {
-			if ident, ok := se.X.(*ast.Ident); ok {
-				if ident.Obj != nil {
-					isPtrObj = true
-					typeStr = ident.Obj.Name
-				} else {
-					typeStr = "*" + ident.Name
-					isPtr = true
-				}
-			}
-		}
+		define := &Field{}
+		parseFieldType(field.Type, define)
 		fieldName := field.Names[0].Name
 		tagName := fieldName // 默认使用字段名
 
@@ -188,21 +169,43 @@ func processStructField(currentNode *ds.Node[Struct], name2Node map[string]*ds.N
 		} else {
 			continue
 		}
+		define.Name = fieldName
+		define.TagName = tagName
+		currentStruct.Fields = append(currentStruct.Fields, *define)
+	}
+}
 
-		elems := Field{
-			Name:    fieldName,
-			TagName: tagName,
-			Type:    typeStr,
+func parseFieldType(expr ast.Expr, define *Field) {
+	if ident, ok := expr.(*ast.Ident); ok {
+		// 特殊处理结构体字段
+		if ident.Obj != nil {
+			define.IsObj = true
+			define.Type = ident.Obj.Name
+		} else {
+			define.Type = ident.Name
 		}
-		if isPtrObj {
-			elems.IsPtrObj = true
-		} else if isObj {
-			elems.IsObj = true
+	}
+	if se, ok := expr.(*ast.StarExpr); ok {
+		if ident, ok := se.X.(*ast.Ident); ok {
+			if ident.Obj != nil {
+				define.IsPtrObj = true
+				define.Type = ident.Obj.Name
+			} else {
+				define.Type = "*" + ident.Name
+				define.IsPtr = true
+			}
 		}
-		if isPtr {
-			elems.IsPtr = true
-		}
-		currentStruct.Fields = append(currentStruct.Fields, elems)
+	}
+	if mt, ok := expr.(*ast.MapType); ok {
+		define.IsMap = true
+		define.MapKey = &Field{}
+		define.MapValue = &Field{}
+		parseFieldType(mt.Key, define.MapKey)
+		parseFieldType(mt.Value, define.MapValue)
+	}
+	if at, ok := expr.(*ast.ArrayType); ok {
+		define.IsArray = true
+		parseFieldType(at.Elt, define)
 	}
 }
 

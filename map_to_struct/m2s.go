@@ -9,8 +9,23 @@ package {{.PackageName}}
 {{range .Structs}}
 // Map2Struct converts a map[string]any to the {{.Name}} struct.
 func (src *{{.Name}}) Map2Struct(mm map[string]any){
-    {{range .Fields}} 
-		{{if .IsPtrObj}}
+    {{range .Fields}}
+		{{if not .Type}}{{continue}}{{end}}
+		{{if .IsMap}}
+		if mm["{{.TagName}}"] != nil {
+			if mmm, ok := mm["{{.TagName}}"].(map[{{.MapKey.Type}}]{{.MapValue.Type}}); ok {
+				for k, v := range mmm {
+					src.{{.Name}}[k] = v
+				}
+			}
+		}
+		{{else if .IsArray}}
+		if mm["{{.TagName}}"] != nil {
+            if mmm, ok := mm["{{.TagName}}"].([]{{.Type}}); ok {
+				src.{{.Name}} = mmm
+			}
+		}
+		{{else if .IsPtrObj}}
 		if mm["{{.TagName}}"] != nil {
 			tep := &{{.Type}}{}
             if mmm, ok := mm["{{.TagName}}"].(map[string]any); ok {
