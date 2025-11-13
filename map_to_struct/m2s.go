@@ -12,11 +12,19 @@ func (src *{{.Name}}) Map2Struct(mm map[string]any){
     {{range .Fields}} 
 		{{if .IsPtrObj}}
 		if mm["{{.TagName}}"] != nil {
-			src.{{.Name}} = mm["{{.TagName}}"].(*{{.Type}})
+			tep := &{{.Type}}{}
+            if mmm, ok := mm["{{.TagName}}"].(map[string]any); ok {
+				tep.Map2Struct(mmm)
+			}
+			src.{{.Name}} = tep
 		}
 		{{else if .IsObj}}
          if val, ok := mm["{{.TagName}}"]; ok {
-			src.{{.Name}} = val.({{.Type}})
+			tep := &{{.Type}}{}
+			 if mmm, ok := val.(map[string]any); ok {
+				tep.Map2Struct(mmm)
+			}
+			src.{{.Name}} = *tep
 		}
 		{{else if .IsPtr}}
 		if mm["{{.TagName}}"] != nil {
