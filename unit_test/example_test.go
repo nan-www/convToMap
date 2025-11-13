@@ -16,7 +16,7 @@ func TestMap2Struct(t *testing.T) {
 		"B":       2,
 	}
 	ex := &Example{}
-	ex._2Struct(m)
+	ex.Map2Struct(m)
 	marshalString, _ := sonic.MarshalString(ex)
 	t.Logf("ex: %v", marshalString)
 
@@ -34,10 +34,10 @@ func TestMap2Struct(t *testing.T) {
 		Name:  "name",
 		Float: 1.0,
 	}
-	m = example._2Map()
+	m = example.ToStringMap()
 	t.Logf("m: %v", m)
 	ex1 := &Example{}
-	ex1._2Struct(m)
+	ex1.Map2Struct(m)
 	marshalString, _ = sonic.MarshalString(ex1)
 	t.Logf("ex1: %v", marshalString)
 }

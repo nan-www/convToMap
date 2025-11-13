@@ -10,8 +10,6 @@ import (
 	"github.com/nan-www/convToMap/ds"
 )
 
-const tag = "//go:generate convToMap"
-
 type TemplateData struct {
 	PackageName string
 	Structs     []*Struct
@@ -31,7 +29,7 @@ type Field struct {
 	Type     string
 }
 
-func ParseMarkStruct(node *ast.File) *TemplateData {
+func ParseMarkStruct(node *ast.File, command string) *TemplateData {
 	data := TemplateData{
 		PackageName: node.Name.Name,
 		Structs:     []*Struct{},
@@ -46,7 +44,7 @@ func ParseMarkStruct(node *ast.File) *TemplateData {
 
 		foundGenerate := false
 		for _, comment := range genDecl.Doc.List {
-			if strings.Contains(comment.Text, tag) {
+			if strings.Contains(comment.Text, command) {
 				foundGenerate = true
 				break
 			}
