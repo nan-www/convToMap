@@ -21,16 +21,17 @@ type Struct struct {
 }
 
 type Field struct {
-	Name     string
-	TagName  string // 用于 map 的键名，通常是 JSON tag
-	IsObj    bool
-	IsPtrObj bool
-	IsPtr    bool
-	IsMap    bool
-	IsArray  bool
-	Type     string
-	MapKey   *Field
-	MapValue *Field
+	Name       string
+	TagName    string // 用于 map 的键名，通常是 JSON tag
+	IsObj      bool
+	IsPtrObj   bool
+	IsPtr      bool
+	IsMap      bool
+	IsArray    bool
+	Type       string
+	OriginType string
+	MapKey     *Field
+	MapValue   *Field
 }
 
 func ParseMarkStruct(node *ast.File, command string) *TemplateData {
@@ -192,6 +193,7 @@ func parseFieldType(expr ast.Expr, define *Field) {
 				define.Type = ident.Obj.Name
 			} else {
 				define.Type = "*" + ident.Name
+				define.OriginType = ident.Name
 				define.IsPtr = true
 			}
 		}

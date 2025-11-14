@@ -43,11 +43,17 @@ func (src *{{.Name}}) Map2Struct(mm map[string]any){
 		}
 		{{else if .IsPtr}}
 		if mm["{{.TagName}}"] != nil {
-			src.{{.Name}} = mm["{{.TagName}}"].({{.Type}})
+			if val, ok := mm["{{.TagName}}"].({{.Type}}); ok{
+				src.{{.Name}} = val
+ 			}else{
+				if val, ok := mm["{{.TagName}}"].({{.OriginType}}); ok {
+					src.{{.Name}} = &val
+				}
+			}
 		}
 		{{else}}
-		if val, ok := mm["{{.TagName}}"]; ok {
-			src.{{.Name}} = val.({{.Type}})
+		if val, ok := mm["{{.TagName}}"].({{.Type}}); ok {
+			src.{{.Name}} = val
 		}
 		{{end}}
     {{end}}
