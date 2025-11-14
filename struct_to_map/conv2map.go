@@ -11,7 +11,11 @@ package {{.PackageName}}
 func (s *{{.Name}}) ToStringMap() map[string]any {
     m := make(map[string]any)
     {{range .Fields}} 
-		{{if .IsPtrObj}}
+		{{if .IsArray}}
+		if len(s.{{.Name}}) > 0 {
+			m["{{.TagName}}"] = s.{{.Name}}
+		}
+		{{else if .IsPtrObj}}
 		if s.{{.Name}} != nil {
 			m["{{.TagName}}"] = s.{{.Name}}.ToStringMap()
 		}

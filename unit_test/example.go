@@ -25,8 +25,8 @@ type Example struct {
 
 //go:generate convToMap example.go
 type InlineStruct struct {
-	A string
-	B int
+	A string `json:"a"`
+	B int    `json:"b"`
 }
 
 //go:generate convToMap example.go
