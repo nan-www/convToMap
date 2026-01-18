@@ -30,31 +30,33 @@ go install github.com/nan-www/convToMap@latest
 
 ### 1. 在你的结构体上添加注释
 
-在需要生成转换方法的结构体前添加 `//go:generate convToMap` 注释：
+在需要生成转换方法的结构体前添加 `//go:generate convToMap` ${YOUR_FILE_NAME}
 
+你可以在unit_test目录下找到示例文件。
 ```go
 package example
 
-//go:generate convToMap example.go
-type User struct {
-    ID       int     `json:"id"`
-    Name     string  `json:"name,omitempty"`
-    Email    string  `json:"email"`
-    Age      *int    `json:"age,omitempty"`
-    Profile  Profile `json:"profile"`
+//go:generate convToMap simple_example.go
+type SimpleExample struct {
+	Str string `json:"str"`
+	Point Point `json:"point"`
+	NMIXX `json:"inline"`
 }
-
-//go:generate convToMap example.go
-type Profile struct {
-    Bio    string `json:"bio"`
-    Avatar string `json:"avatar,omitempty"`
+//go:generate convToMap simple_example.go
+type Point struct {
+	X int `json:"x"`
+	Y float64 `json:"y"`
+}
+//go:generate convToMap simple_example.go
+type NMIXX struct {
+	K *string `json:"k"`
 }
 ```
 
 ### 2. 运行代码生成
 
 ```bash
-convToMap example.go
+convToMap simple_example.go
 ```
 
 或者使用 `go generate`：
@@ -66,51 +68,111 @@ go generate ./...
 ### 3. 使用生成的方法
 
 生成的代码会创建两个文件：
-- `example_generated_0.go` - 包含 `ToStringMap()` 方法
-- `example_generated_1.go` - 包含 `Map2Struct()` 方法
+- `simple_example_generated_0.go` - 包含 `ToStringMap()` 方法
+- `simple_example_generated_1.go` - 包含 `Map2Struct()` 方法
 
 #### Struct 转 Map
 
 ```go
-user := &User{
-    ID:    1,
-    Name:  "Alice",
-    Email: "alice@example.com",
-    Profile: Profile{
-        Bio:    "Software Engineer",
-        Avatar: "avatar.jpg",
-    },
-}
+// ToStringMap converts the SimpleExample struct to a map[string]any.
+func (s *SimpleExample) ToStringMap() map[string]any {
+	m := make(map[string]any)
 
-// 转换为 map
-m := user.ToStringMap()
-// m = map[string]any{
-//     "id": 1,
-//     "name": "Alice",
-//     "email": "alice@example.com",
-//     "profile": map[string]any{
-//         "bio": "Software Engineer",
-//         "avatar": "avatar.jpg",
-//     },
-// }
+	if s.Str != "" {
+		m["str"] = s.Str
+	}
+
+	m["point"] = s.Point.ToStringMap()
+
+	if s.K != nil {
+		m["k"] = s.K
+	}
+
+	return m
+}
+// ToStringMap converts the Point struct to a map[string]any.
+func (s *Point) ToStringMap() map[string]any {
+	m := make(map[string]any)
+
+	if s.X != 0 {
+		m["x"] = s.X
+	}
+
+	if s.Y != 0 {
+		m["y"] = s.Y
+	}
+
+	return m
+}
+// ToStringMap converts the NMIXX struct to a map[string]any.
+func (s *NMIXX) ToStringMap() map[string]any {
+	m := make(map[string]any)
+
+	if s.K != nil {
+		m["k"] = s.K
+	}
+
+	return m
+}
 ```
 
 #### Map 转 Struct
 
 ```go
-m := map[string]any{
-    "id":    1,
-    "name":  "Alice",
-    "email": "alice@example.com",
-    "profile": map[string]any{
-        "bio":    "Software Engineer",
-        "avatar": "avatar.jpg",
-    },
+// Map2Struct converts a map[string]any to the SimpleExample struct.
+func (src *SimpleExample) Map2Struct(mm map[string]any) {
+
+	if val, ok := mm["str"].(string); ok {
+		src.Str = val
+	}
+
+	if val, ok := mm["point"]; ok {
+		tep := &Point{}
+		if mmm, ok := val.(map[string]any); ok {
+			tep.Map2Struct(mmm)
+		}
+		src.Point = *tep
+	}
+
+	if mm["k"] != nil {
+		if val, ok := mm["k"].(*string); ok {
+			src.K = val
+		} else {
+			if val, ok := mm["k"].(string); ok {
+				src.K = &val
+			}
+		}
+	}
+
 }
 
-user := &User{}
-user.Map2Struct(m)
-// user 现在包含了 map 中的所有数据
+// Map2Struct converts a map[string]any to the Point struct.
+func (src *Point) Map2Struct(mm map[string]any) {
+
+	if val, ok := mm["x"].(int); ok {
+		src.X = val
+	}
+
+	if val, ok := mm["y"].(float64); ok {
+		src.Y = val
+	}
+
+}
+
+// Map2Struct converts a map[string]any to the NMIXX struct.
+func (src *NMIXX) Map2Struct(mm map[string]any) {
+
+	if mm["k"] != nil {
+		if val, ok := mm["k"].(*string); ok {
+			src.K = val
+		} else {
+			if val, ok := mm["k"].(string); ok {
+				src.K = &val
+			}
+		}
+	}
+
+}
 ```
 
 ## 📖 功能详解
